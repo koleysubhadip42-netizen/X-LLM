@@ -3,71 +3,84 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>x-LLM - Advanced AI</title>
+  <title>x-LLM AI | Nvidia Engine</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600&family=Inter:wght@400;500;600&display=swap');
     body { font-family: 'Inter', sans-serif; overflow: hidden; }
     .logo-font { font-family: 'Space Grotesk', sans-serif; }
     #chatContainer::-webkit-scrollbar { width: 4px; }
     #chatContainer::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 10px; }
-    .message-bubble img { max-width: 250px; border-radius: 12px; margin-bottom: 10px; }
-    .loader { border: 2px solid #f3f3f3; border-top: 2px solid #7c3aed; border-radius: 50%; width: 16px; height: 16px; animation: spin 1s linear infinite; display: inline-block; }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .prose pre { background: #18181b !important; padding: 1rem; border-radius: 0.75rem; border: 1px solid #3f3f46; overflow-x: auto; color: #e4e4e7; }
+    .prose code { color: #f472b6; font-size: 0.9em; }
+    .sidebar-item:hover .action-btns { opacity: 1; }
+    .mic-active { color: #ef4444 !important; animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
   </style>
 </head>
 <body class="bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 transition-colors duration-200">
 
 <div id="app" class="flex h-screen overflow-hidden">
-  <aside id="sidebar" class="fixed md:static z-40 w-72 h-full bg-white dark:bg-zinc-900 border-r dark:border-zinc-800 flex flex-col transform -translate-x-full md:translate-x-0 transition-transform duration-300">
+  <aside id="sidebar" class="fixed md:static z-40 w-72 h-full bg-white dark:bg-zinc-900 border-r dark:border-zinc-800 flex flex-col transform -translate-x-full md:translate-x-0 transition-transform duration-300 shadow-2xl">
     <div class="p-6 border-b dark:border-zinc-800 flex items-center gap-3">
-      <div class="w-8 h-8 bg-violet-600 rounded-lg flex items-center justify-center font-bold text-white">X</div>
+      <div class="w-9 h-9 bg-gradient-to-tr from-violet-600 to-fuchsia-600 rounded-xl flex items-center justify-center font-bold text-white shadow-lg">X</div>
       <span class="font-bold text-2xl logo-font tracking-tighter">x-LLM</span>
+      <button onclick="toggleSidebar()" class="md:hidden ml-auto text-xl">&times;</button>
     </div>
-    <button onclick="newChat()" class="m-4 bg-violet-600 text-white py-3 rounded-xl font-semibold hover:bg-violet-700 transition">+ New Chat</button>
+    <button onclick="newChat()" class="m-4 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 py-3 rounded-2xl font-bold hover:opacity-90 transition">+ New Chat</button>
     <div id="chatList" class="flex-1 overflow-y-auto px-4 space-y-2"></div>
     <div class="p-4 border-t dark:border-zinc-800">
-      <button onclick="showSettings()" class="w-full text-left px-4 py-2 hover:bg-zinc-800 rounded-lg flex items-center gap-3"><i class="fa-solid fa-gear"></i> Settings</button>
+      <button onclick="showSettings()" class="w-full text-left px-4 py-3 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl flex items-center gap-3 transition font-medium"><i class="fa-solid fa-gear"></i> Settings</button>
     </div>
   </aside>
 
   <div class="flex-1 flex flex-col w-full relative">
-    <header class="h-16 flex items-center justify-between px-6 border-b dark:border-zinc-800 bg-white dark:bg-zinc-900">
-      <button onclick="toggleSidebar()" class="md:hidden text-xl"><i class="fa-solid fa-bars"></i></button>
-      <div class="logo-font font-bold text-xl text-violet-600">x-LLM</div>
+    <header class="h-16 flex items-center justify-between px-6 border-b dark:border-zinc-800 bg-white/50 dark:bg-zinc-950/50 backdrop-blur-xl">
+      <button onclick="toggleSidebar()" class="md:hidden text-xl"><i class="fa-solid fa-bars-staggered"></i></button>
+      <div class="logo-font font-bold text-xl bg-clip-text text-transparent bg-gradient-to-r from-violet-500 to-fuchsia-500">x-LLM Engine</div>
       <div class="w-6"></div>
     </header>
 
-    <main id="chatContainer" class="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 pb-40"></main>
+    <main id="chatContainer" class="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 pb-48"></main>
 
-    <div class="absolute bottom-0 left-0 right-0 p-4 bg-zinc-50 dark:bg-zinc-950">
+    <div class="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-zinc-50 dark:from-zinc-950 via-zinc-50/90 dark:via-zinc-950/90 to-transparent">
       <div class="max-w-4xl mx-auto">
-        <div id="attachmentPreview" class="hidden mb-3 p-2 bg-violet-50 dark:bg-violet-900/20 rounded-xl flex items-center gap-3 border border-violet-200">
-            <div id="previewThumb" class="w-10 h-10 rounded overflow-hidden"></div>
-            <span class="text-xs flex-1 truncate" id="fileName"></span>
-            <button onclick="removeFile()" class="text-red-500 px-2">&times;</button>
+        <div id="attachmentPreview" class="hidden mb-4 p-3 bg-white dark:bg-zinc-900 rounded-2xl flex items-center gap-4 border dark:border-zinc-800 shadow-xl">
+            <div id="previewThumb" class="w-12 h-12 rounded-lg overflow-hidden border dark:border-zinc-700"></div>
+            <div class="flex-1"><p class="text-xs font-bold truncate" id="fileName"></p><p class="text-[10px] text-zinc-500">Image attached</p></div>
+            <button onclick="removeFile()" class="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full text-red-500">&times;</button>
         </div>
         
-        <div class="flex gap-2 items-end bg-white dark:bg-zinc-900 p-2 rounded-2xl border dark:border-zinc-800 shadow-xl">
-          <button onclick="document.getElementById('fileInput').click()" class="p-3 text-zinc-400 hover:text-violet-500"><i class="fa-solid fa-plus"></i></button>
+        <div class="flex gap-2 items-end bg-white dark:bg-zinc-900 p-2 rounded-3xl border dark:border-zinc-800 shadow-2xl focus-within:ring-2 ring-violet-500/50 transition-all">
+          <button onclick="document.getElementById('fileInput').click()" class="p-4 text-zinc-400 hover:text-violet-500 transition"><i class="fa-solid fa-paperclip text-lg"></i></button>
           <input type="file" id="fileInput" class="hidden" accept="image/*" onchange="handleFile(this.files[0])">
-          <textarea id="messageInput" class="flex-1 bg-transparent border-none p-3 outline-none resize-none max-h-32" rows="1" placeholder="Type or ask..."></textarea>
-          <button id="sendBtn" onclick="sendMessage()" class="bg-violet-600 text-white p-3 rounded-xl hover:bg-violet-700 transition"><i class="fa-solid fa-paper-plane"></i></button>
+          
+          <button id="micBtn" onclick="toggleMic()" class="p-4 text-zinc-400 hover:text-red-500 transition"><i class="fa-solid fa-microphone-lines text-lg"></i></button>
+          
+          <textarea id="messageInput" class="flex-1 bg-transparent border-none p-4 outline-none resize-none max-h-40 text-sm md:text-base" rows="1" placeholder="Ask anything to Nvidia Nemotron..."></textarea>
+          
+          <button id="sendBtn" onclick="sendMessage()" class="bg-violet-600 text-white w-12 h-12 rounded-2xl flex items-center justify-center hover:bg-violet-700 transition shadow-lg shadow-violet-600/40">
+            <i class="fa-solid fa-arrow-up"></i>
+          </button>
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<div id="settingsModal" class="fixed inset-0 bg-black/80 hidden flex items-center justify-center z-[100] p-4">
-  <div class="bg-white dark:bg-zinc-900 p-8 rounded-3xl w-full max-w-md border dark:border-zinc-800">
-    <h2 class="text-2xl font-bold mb-6">Settings</h2>
-    <input id="apiKeyInput" type="password" placeholder="OpenRouter API Key" class="w-full bg-zinc-100 dark:bg-zinc-800 p-3 rounded-xl mb-4 outline-none">
-    <input id="modelInput" type="text" value="google/gemini-2.0-flash-lite:preview:free" class="w-full bg-zinc-100 dark:bg-zinc-800 p-3 rounded-xl mb-6 outline-none">
-    <button onclick="saveSettings()" class="w-full py-3 bg-violet-600 text-white font-bold rounded-xl">Save</button>
-    <button onclick="hideSettings()" class="w-full mt-2 text-zinc-500">Cancel</button>
+<div id="settingsModal" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden flex items-center justify-center z-[100] p-4">
+  <div class="bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] w-full max-w-md border dark:border-zinc-800 shadow-2xl">
+    <h2 class="text-2xl font-bold mb-6 logo-font">Configuration</h2>
+    <div class="space-y-4">
+        <div class="space-y-1"><label class="text-[10px] font-bold uppercase text-zinc-500 ml-2">API Key</label><input id="apiKeyInput" type="password" placeholder="OpenRouter Key" class="w-full bg-zinc-100 dark:bg-zinc-800 p-4 rounded-2xl outline-none focus:ring-2 ring-violet-500"></div>
+        <div class="space-y-1"><label class="text-[10px] font-bold uppercase text-zinc-500 ml-2">Model Name</label><input id="modelInput" type="text" value="nvidia/nemotron-3-nano-30b-a3b:free" class="w-full bg-zinc-100 dark:bg-zinc-800 p-4 rounded-2xl outline-none"></div>
+    </div>
+    <div class="flex gap-3 mt-8">
+        <button onclick="saveSettings()" class="flex-1 py-4 bg-violet-600 text-white font-bold rounded-2xl shadow-lg shadow-violet-600/30">Apply</button>
+        <button onclick="hideSettings()" class="flex-1 py-4 bg-zinc-100 dark:bg-zinc-800 rounded-2xl font-bold">Close</button>
+    </div>
   </div>
 </div>
 
@@ -75,8 +88,26 @@
 let chats = JSON.parse(localStorage.getItem("xllm_chats") || "[]");
 let currentId = localStorage.getItem("xllm_curr") || null;
 let apiKey = localStorage.getItem("xllm_key") || "";
-let model = localStorage.getItem("xllm_model") || "google/gemini-2.0-flash-lite:preview:free";
+let model = localStorage.getItem("xllm_model") || "nvidia/nemotron-3-nano-30b-a3b:free";
 let selectedFile = null;
+let isListening = false;
+
+// Speech-to-Text (NLP)
+const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+if(recognition) {
+    recognition.continuous = false;
+    recognition.onresult = (e) => {
+        document.getElementById('messageInput').value = e.results[0][0].transcript;
+        toggleMic();
+    };
+}
+
+function toggleMic() {
+    isListening = !isListening;
+    const btn = document.getElementById('micBtn');
+    if(isListening) { recognition.start(); btn.classList.add('mic-active'); }
+    else { recognition.stop(); btn.classList.remove('mic-active'); }
+}
 
 function saveSettings() {
     apiKey = document.getElementById('apiKeyInput').value;
@@ -98,20 +129,12 @@ function handleFile(file) {
     reader.readAsDataURL(file);
 }
 
-function removeFile() {
-    selectedFile = null;
-    document.getElementById('attachmentPreview').classList.add('hidden');
-}
+function removeFile() { selectedFile = null; document.getElementById('attachmentPreview').classList.add('hidden'); }
 
-function speakText(text) {
+function speakMsg(text) {
     window.speechSynthesis.cancel();
-    const msg = new SpeechSynthesisUtterance(text);
-    window.speechSynthesis.speak(msg);
-}
-
-function copyText(text) {
-    navigator.clipboard.writeText(text);
-    alert("Copied to clipboard!");
+    const utterance = new SpeechSynthesisUtterance(text.replace(/[#*`]/g, ''));
+    window.speechSynthesis.speak(utterance);
 }
 
 function renderMessages() {
@@ -122,20 +145,20 @@ function renderMessages() {
 
     chat.messages.forEach((msg, idx) => {
         const div = document.createElement('div');
-        div.className = `flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} group`;
+        div.className = `flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} group animate-in fade-in duration-500`;
         
         const bubble = document.createElement('div');
-        bubble.className = `${msg.role === 'user' ? 'bg-violet-600 text-white' : 'bg-white dark:bg-zinc-900 border dark:border-zinc-800'} p-4 rounded-2xl max-w-[85%] relative message-bubble`;
+        bubble.className = `${msg.role === 'user' ? 'bg-violet-600 text-white rounded-2xl rounded-tr-none shadow-violet-500/20' : 'bg-white dark:bg-zinc-900 border dark:border-zinc-800 rounded-2xl rounded-tl-none shadow-xl'} p-4 md:p-5 max-w-[85%] relative overflow-hidden`;
         
-        let content = msg.image ? `<img src="${msg.image}">` : "";
-        content += `<div>${marked.parse(msg.content)}</div>`;
+        let content = msg.image ? `<img src="${msg.image}" class="mb-3 rounded-xl border dark:border-zinc-700 shadow-sm">` : "";
+        content += `<div class="prose dark:prose-invert text-sm md:text-base leading-relaxed">${marked.parse(msg.content)}</div>`;
         
-        // Action Buttons
+        // Actions
         const actions = `
-            <div class="flex gap-3 mt-3 opacity-0 group-hover:opacity-100 transition text-xs border-t pt-2 border-zinc-500/30">
-                <button onclick="speakText(\`${msg.content.replace(/`/g, "'")}\`)"><i class="fa-solid fa-volume-high"></i></button>
-                <button onclick="copyText(\`${msg.content.replace(/`/g, "'")}\`)"><i class="fa-solid fa-copy"></i></button>
-                <button onclick="deleteMsg(${idx})"><i class="fa-solid fa-trash"></i></button>
+            <div class="flex gap-4 mt-4 pt-3 border-t border-zinc-500/10 opacity-0 group-hover:opacity-100 transition-all text-[10px] font-bold uppercase tracking-wider">
+                <button onclick="speakMsg(\`${msg.content.replace(/[`'"]/g, '')}\`)" class="hover:text-violet-400 flex items-center gap-1"><i class="fa-solid fa-volume-high"></i> Listen</button>
+                <button onclick="navigator.clipboard.writeText(\`${msg.content.replace(/[`'"]/g, '')}\`)" class="hover:text-violet-400 flex items-center gap-1"><i class="fa-solid fa-copy"></i> Copy</button>
+                <button onclick="deleteMsg(${idx})" class="text-red-500/70 hover:text-red-500 flex items-center gap-1"><i class="fa-solid fa-trash"></i> Delete</button>
             </div>`;
         
         bubble.innerHTML = content + actions;
@@ -152,54 +175,56 @@ async function sendMessage() {
     if(!apiKey) return showSettings();
 
     const chat = chats.find(c => c.id === currentId);
-    const userMsg = { role: "user", content: text || "Analyze this image", image: selectedFile };
-    chat.messages.push(userMsg);
+    chat.messages.push({ role: "user", content: text || "Analyzing image context...", image: selectedFile });
     
-    // Speak prompt
-    if(text) speakText(text);
-
-    let apiContent = [{ type: "text", text: text || "What is in this image?" }];
-    if(selectedFile) apiContent.push({ type: "image_url", image_url: { url: selectedFile } });
-
-    const payload = chat.messages.slice(0, -1).map(m => ({ role: m.role, content: m.content }));
-    payload.push({ role: "user", content: apiContent });
+    // Nemotron support fix: Nemotron usually doesn't take image objects directly via OpenRouter
+    // We send it as text if it's a non-vision model, or structured if it's vision.
+    let payloadContent = text || "Analyze attachment";
+    
+    const history = chat.messages.slice(0, -1).map(m => ({ role: m.role, content: m.content }));
+    history.push({ role: "user", content: payloadContent });
 
     input.value = ""; 
     removeFile();
     renderMessages();
 
+    const loader = document.createElement('div');
+    loader.className = "flex gap-2 p-4 text-zinc-500 text-xs italic animate-pulse";
+    loader.innerHTML = `<i class="fa-solid fa-circle-notch animate-spin"></i> x-LLM is processing...`;
+    document.getElementById('chatContainer').appendChild(loader);
+
     try {
         const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
             method: "POST",
-            headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
-            body: JSON.stringify({ model: model, messages: payload })
+            headers: { 
+                "Authorization": `Bearer ${apiKey}`, 
+                "Content-Type": "application/json",
+                "HTTP-Referer": window.location.href
+            },
+            body: JSON.stringify({ model: model, messages: history })
         });
         const data = await res.json();
-        const aiReply = data.choices[0].message.content;
+        loader.remove();
         
-        chat.messages.push({ role: "assistant", content: aiReply });
-        renderMessages();
-        speakText(aiReply);
-        saveState();
-    } catch(e) {
-        alert("API Connection Error! Please check your Key.");
-    }
+        if (data.choices) {
+            const reply = data.choices[0].message.content;
+            chat.messages.push({ role: "assistant", content: reply });
+            if(chat.messages.length === 2) chat.title = text.substring(0, 25) || "New Discussion";
+            saveState(); renderMessages(); renderChats();
+        }
+    } catch(e) { loader.innerText = "Connection error."; }
 }
 
 function deleteMsg(idx) {
-    const chat = chats.find(c => c.id === currentId);
-    chat.messages.splice(idx, 1);
-    saveState();
-    renderMessages();
+    chats.find(c => c.id === currentId).messages.splice(idx, 1);
+    saveState(); renderMessages();
 }
 
 function newChat() {
     const id = Date.now().toString();
-    chats.unshift({ id, title: "New Chat", messages: [] });
+    chats.unshift({ id, title: "Untitled Session", messages: [] });
     currentId = id;
-    saveState();
-    renderChats();
-    renderMessages();
+    saveState(); renderChats(); renderMessages();
 }
 
 function renderChats() {
@@ -207,22 +232,29 @@ function renderChats() {
     list.innerHTML = "";
     chats.forEach(c => {
         const div = document.createElement('div');
-        div.className = `p-3 rounded-xl cursor-pointer ${c.id === currentId ? 'bg-violet-600/10 text-violet-600' : 'hover:bg-zinc-800'}`;
-        div.innerHTML = `<div class="flex justify-between items-center"><span class="truncate">${c.title}</span><i class="fa-solid fa-xmark text-xs" onclick="deleteChat('${c.id}')"></i></div>`;
-        div.onclick = () => { currentId = c.id; renderMessages(); renderChats(); };
+        div.className = `p-4 rounded-2xl cursor-pointer group flex justify-between items-center transition ${c.id === currentId ? 'bg-violet-600/10 text-violet-600 border border-violet-500/20' : 'hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500'}`;
+        div.innerHTML = `
+            <span class="truncate text-sm font-semibold">${c.title}</span>
+            <div class="action-btns opacity-0 flex gap-3 transition">
+                <button onclick="event.stopPropagation(); const t=prompt('New Title:', '${c.title}'); if(t) { c.title=t; saveState(); renderChats(); }" class="hover:text-zinc-900 dark:hover:text-white"><i class="fa-solid fa-pen-to-square"></i></button>
+                <button onclick="event.stopPropagation(); if(confirm('Delete?')) { chats=chats.filter(x=>x.id!=='${c.id}'); if(currentId==='${c.id}') currentId=chats[0]?.id||null; if(!currentId) newChat(); saveState(); renderChats(); renderMessages(); }" class="hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button>
+            </div>`;
+        div.onclick = () => { currentId = c.id; renderMessages(); renderChats(); if(window.innerWidth < 768) toggleSidebar(); };
         list.appendChild(div);
     });
 }
 
-function deleteChat(id) { chats = chats.filter(c => c.id !== id); saveState(); renderChats(); }
 function saveState() { localStorage.setItem("xllm_chats", JSON.stringify(chats)); localStorage.setItem("xllm_curr", currentId); }
 function toggleSidebar() { document.getElementById('sidebar').classList.toggle('-translate-x-full'); }
-function showSettings() { document.getElementById('settingsModal').classList.remove('hidden'); }
+function showSettings() { document.getElementById('settingsModal').classList.remove('hidden'); document.getElementById('apiKeyInput').value = apiKey; document.getElementById('modelInput').value = model; }
 function hideSettings() { document.getElementById('settingsModal').classList.add('hidden'); }
 
-if(!currentId) newChat();
-renderChats();
-renderMessages();
+if(!currentId || !chats.length) newChat();
+renderChats(); renderMessages();
+
+document.getElementById('messageInput').addEventListener('keydown', e => {
+    if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
 </script>
 </body>
 </html>
